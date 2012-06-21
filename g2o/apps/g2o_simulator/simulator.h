@@ -103,26 +103,34 @@ class Robot: public BaseRobot{
   typedef typename PoseObject::EstimateType PoseType;
   
  Robot(World* world_, const std::string& name_, int baseId_=-1): BaseRobot(world_, name_, baseId_){}
+
+
+  RobotPoseObject* lastPoseObject() {
+    typename TrajectoryType::reverse_iterator it=_trajectory.rbegin();
+    if(it==_trajectory.rend()){
+      return 0;
+    }  
+    return *it;
+  }
+
   virtual void relativeMove(const PoseType& movement_) {
     _pose=_pose*movement_;
     move(_pose);
   }
-  
+
   virtual void move(const PoseType& pose_) {
     _pose=pose_;
     if (world()) {
       PoseObject* po=new PoseObject();
       po->vertex()->setEstimate(_pose);
-      typename TrajectoryType::reverse_iterator it=_trajectory.rbegin();
       int assignedId=-1;
       
       if (baseId() != -1){
-	if(it==_trajectory.rend()){
+	RobotPoseObject* prevPo=lastPoseObject();
+	if (!prevPo) {
 	  assignedId=baseId();
 	} else {
-	  PoseObject* prevPo=*it;
-	  VertexType* prevV=prevPo->vertex();
-	  assignedId=prevV->id()+1;
+	  assignedId=prevPo->vertex()->id()+1;
 	}
       }
       world()->addWorldObject(po,assignedId);

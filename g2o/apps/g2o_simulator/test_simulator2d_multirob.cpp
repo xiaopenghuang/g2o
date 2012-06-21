@@ -81,14 +81,14 @@ int main(int argc, char** argv) {
   }
 
 
-  std::vector<Robot2D*> robots;
+  std::vector<Robot2D*> robots(nRobots);
   for (int i=0; i<nRobots; i++){
     char rname[20];
     sprintf(rname, "robot-%02d", i);
     Robot2D* r=new Robot2D(&world, rname);
     r->setBaseId((i+1)*1000000);
     cerr << "base id for robot " << i << " is " << r->baseId() << endl;
-    robots.push_back(r);
+    robots[i]=r;
     world.addRobot(r);
   }
 
@@ -126,32 +126,46 @@ int main(int argc, char** argv) {
     ss << "-pose";
   }
   
-  // if (hasPointSensor) {
-  //   SensorPointXY* pointSensor = new SensorPointXY("pointSensor");
-  //   robot.addSensor(pointSensor);
-  //   Matrix2d pointInfo = pointSensor->information();
-  //   pointInfo.setIdentity();
-  //   pointInfo*=100;
-  //   pointSensor->setInformation(pointInfo);
-  //   ss << "-pointXY";
-  // }
+  if (hasPointSensor) {
+    for (size_t i=0; i<robots.size(); i++) {
+      Robot2D *r=robots[i];
+      SensorPointXY* pointSensor = new SensorPointXY("pointSensor");
+      r->addSensor(pointSensor);
+      Matrix2d pointInfo = pointSensor->information();
+      pointInfo.setIdentity();
+      pointInfo*=100;
+      pointSensor->setInformation(pointInfo);
+    }
+    ss << "-pointXY";
+  }
 
-  // if (hasPointBearingSensor) {
-  //   SensorPointXYBearing* bearingSensor = new SensorPointXYBearing("bearingSensor");
-  //   robot.addSensor(bearingSensor);
-  //   bearingSensor->setInformation(bearingSensor->information()*1000);
-  //   ss << "-pointBearing";
-  // }
-
+  if (hasPointBearingSensor) {
+    for (size_t i=0; i<robots.size(); i++) {
+      Robot2D *r=robots[i];
+      SensorPointXYBearing* bearingSensor = new SensorPointXYBearing("bearingSensor");
+      r->addSensor(bearingSensor);
+      bearingSensor->setInformation(bearingSensor->information()*1000);
+    }
+    ss << "-pointBearing";
+  }
 
   // place all robots in the map;
 
 
-  std::vector<SE2> initialPoses(robots.size());
-  initialPoses[1] = SE2(10,10,-M_PI);
+  // put the robots randomly
   for (size_t i=0; i<robots.size(); i++) {
     Robot2D *r=robots[i];
-    r->move(initialPoses[i]);
+
+    double x = sampleUniform(-.25,.25, &generator)*worldSize;
+    double y = sampleUniform(-.25,.25, &generator)*worldSize;
+    int quadrant=(int) sampleUniform(0,3, &generator);
+    
+    SE2 p(x,y,(M_PI/2)*quadrant);
+    r->move(p);
+    Robot2D::PoseObject* po=r->lastPoseObject();
+    if (po){
+      po->vertex()->setFixed(true);
+    }
   }
   
   double pStraight=0.7;
@@ -166,8 +180,7 @@ int main(int argc, char** argv) {
     cerr << "m";
     for (size_t i=0; i<robots.size(); i++) {
       Robot2D *r=robots[i];
-
-   
+      
       SE2 move;
       SE2 pose=r->pose();
       double dtheta=-100;
