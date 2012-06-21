@@ -87,13 +87,16 @@ namespace g2o{
     return result.second;
   }
   
-  bool World::addWorldObject(BaseWorldObject* object){
+  bool World::addWorldObject(BaseWorldObject* object, int overrideId){
     std::pair<std::set<BaseWorldObject*>::iterator, bool> result=_objects.insert(object);
     if (result.second){
       object->setWorld(this);
     }
     if (graph() && object->vertex()){
-      object->vertex()->setId(_runningId++);
+      int myId=overrideId==-1 ? _runningId++ : overrideId;
+      cerr << "overrideId= " << overrideId << endl;
+      cerr << "myId= " << myId << endl;
+      object->vertex()->setId(myId);
       graph()->addVertex(object->vertex());
     }
     return result.second;

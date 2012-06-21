@@ -77,7 +77,7 @@ class WorldObject: public BaseWorldObject, VertexType_{
 
 class G2O_SIMULATOR_API BaseRobot {
  public:
-  BaseRobot(World* world_, const std::string& name_){_world = world_; _name = name_; }
+  BaseRobot(World* world_, const std::string& name_, int baseId_=-1){_world = world_; _name = name_; _baseId= baseId_;}
   void setWorld(World* world_) {_world = world_;}
   World* world() {return _world;}
   const std::string& name() const {return _name;}
@@ -85,10 +85,13 @@ class G2O_SIMULATOR_API BaseRobot {
   bool addSensor(BaseSensor* sensor);
   const std::set<BaseSensor*> sensors() {return _sensors;}
   virtual void sense();
+  int baseId() const {return _baseId;}
+  void setBaseId(int baseId_) {_baseId = baseId_;}
  protected:
   World* _world;
   std::set<BaseSensor*> _sensors;
   std::string _name;
+  int _baseId;
 };
 
 template <class RobotPoseObject>
@@ -99,7 +102,7 @@ class Robot: public BaseRobot{
   typedef typename PoseObject::VertexType VertexType;
   typedef typename PoseObject::EstimateType PoseType;
   
- Robot(World* world_, const std::string& name_): BaseRobot(world_, name_){}
+ Robot(World* world_, const std::string& name_, int baseId_=-1): BaseRobot(world_, name_, baseId_){}
   virtual void relativeMove(const PoseType& movement_) {
     _pose=_pose*movement_;
     move(_pose);
@@ -110,7 +113,19 @@ class Robot: public BaseRobot{
     if (world()) {
       PoseObject* po=new PoseObject();
       po->vertex()->setEstimate(_pose);
-      world()->addWorldObject(po);
+      typename TrajectoryType::reverse_iterator it=_trajectory.rbegin();
+      int assignedId=-1;
+      
+      if (baseId() != -1){
+	if(it==_trajectory.rend()){
+	  assignedId=baseId();
+	} else {
+	  PoseObject* prevPo=*it;
+	  VertexType* prevV=prevPo->vertex();
+	  assignedId=prevV->id()+1;
+	}
+      }
+      world()->addWorldObject(po,assignedId);
       _trajectory.push_back(po);
     }
   }
@@ -274,7 +289,7 @@ class G2O_SIMULATOR_API World{
   World(OptimizableGraph* graph_) {_graph = graph_; _runningId=0; _paramId=0;}
   OptimizableGraph* graph() {return _graph;}
   bool addRobot(BaseRobot* robot);
-  bool addWorldObject(BaseWorldObject* worldObject);
+  bool addWorldObject(BaseWorldObject* worldObject, int overrideId=-1);
   bool addParameter(Parameter* p);
 
   std::set<BaseWorldObject*>& objects() {return _objects;}

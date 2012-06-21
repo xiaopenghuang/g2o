@@ -37,6 +37,12 @@ ADD_EXECUTABLE(g2o_simulator2d_application
 TARGET_LINK_LIBRARIES(g2o_simulator2d_application g2o_simulator_library types_slam3d types_slam2d core)
 SET_TARGET_PROPERTIES(g2o_simulator2d_application PROPERTIES OUTPUT_NAME g2o_simulator2d${EXE_POSTFIX})
 
+ADD_EXECUTABLE(g2o_simulator2d_multirob_application
+  test_simulator2d_multirob.cpp
+)
+TARGET_LINK_LIBRARIES(g2o_simulator2d_multirob_application g2o_simulator_library types_slam3d types_slam2d core)
+SET_TARGET_PROPERTIES(g2o_simulator2d_multirob_application PROPERTIES OUTPUT_NAME g2o_simulator2d_multirob${EXE_POSTFIX})
+
 ADD_EXECUTABLE(g2o_simulator3d_application
   test_simulator3d.cpp
 )
