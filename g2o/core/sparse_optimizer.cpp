@@ -68,14 +68,12 @@ namespace g2o{
 #   ifdef G2O_OPENMP
 #   pragma omp parallel for default (shared) if (_activeEdges.size() > 50)
 #   endif
-    for (int k = 0; k < static_cast<int>(_activeEdges.size()); ++k) {
-      OptimizableGraph::Edge* e = _activeEdges[k];
+    for (auto e : _activeEdges) {
       e->computeError();
     }
 
 #  ifndef NDEBUG
-    for (int k = 0; k < static_cast<int>(_activeEdges.size()); ++k) {
-      OptimizableGraph::Edge* e = _activeEdges[k];
+    for (auto e : _activeEdges) {
       bool hasNan = arrayHasNaN(e->errorData(), e->dimension());
       if (hasNan) {
         cerr << "computeActiveErrors(): found NaN in error for edge " << e << endl;
@@ -117,13 +115,13 @@ namespace g2o{
 
     int maxDim=0;
     for (auto it : vertices()){
-      OptimizableGraph::Vertex* v=static_cast<OptimizableGraph::Vertex*>(it.second); 
+      OptimizableGraph::Vertex* v=polymorphic_downcast<OptimizableGraph::Vertex*>(it.second); 
       maxDim=std::max(maxDim,v->dimension());
     }
     
     OptimizableGraph::Vertex* rut=0;
     for (auto it : vertices()){
-      OptimizableGraph::Vertex* v=static_cast<OptimizableGraph::Vertex*>(it.second);
+      OptimizableGraph::Vertex* v=polymorphic_downcast<OptimizableGraph::Vertex*>(it.second);
       if (v->dimension()==maxDim){
         rut=v;
         break;
@@ -139,12 +137,12 @@ namespace g2o{
 
     int maxDim=0;
     for (auto it : vertices()){
-      OptimizableGraph::Vertex* v=static_cast<OptimizableGraph::Vertex*>(it.second); 
+      OptimizableGraph::Vertex* v=polymorphic_downcast<OptimizableGraph::Vertex*>(it.second); 
       maxDim = std::max(maxDim,v->dimension());
     }
 
     for (auto it : vertices()){
-      OptimizableGraph::Vertex* v=static_cast<OptimizableGraph::Vertex*>(it.second);
+      OptimizableGraph::Vertex* v=polymorphic_downcast<OptimizableGraph::Vertex*>(it.second);
       if (v->dimension() == maxDim) {
         // test for fixed vertex
         if (v->fixed()) {
@@ -152,7 +150,7 @@ namespace g2o{
         }
         // test for full dimension prior
         for (auto eit : v->edges()) {
-          OptimizableGraph::Edge* e = static_cast<OptimizableGraph::Edge*>(eit);
+          OptimizableGraph::Edge* e = polymorphic_downcast<OptimizableGraph::Edge*>(eit);
           if (e->vertices().size() == 1 && e->dimension() == maxDim)
             return false;
         }
@@ -171,7 +169,6 @@ namespace g2o{
     size_t i = 0;
     for (int k=0; k<2; k++)
       for (auto v : vlist){
-        //OptimizableGraph::Vertex* v = it;
       if (! v->fixed()){
         if (static_cast<int>(v->marginalized()) == k){
           v->setHessianIndex(i);
@@ -285,7 +282,7 @@ namespace g2o{
       if (e->numUndefinedVertices())
 	continue;
       for (vector<HyperGraph::Vertex*>::const_iterator vit = e->vertices().begin(); vit != e->vertices().end(); ++vit) {
-        auxVertexSet.insert(static_cast<OptimizableGraph::Vertex*>(*vit));
+        auxVertexSet.insert(polymorphic_downcast<OptimizableGraph::Vertex*>(*vit));
       }
       _activeEdges.push_back(reinterpret_cast<OptimizableGraph::Edge*>(*it));
     }
@@ -321,14 +318,14 @@ namespace g2o{
     for (EdgeContainer::iterator it = _activeEdges.begin(); it != _activeEdges.end(); ++it) {
       OptimizableGraph::Edge* e = *it;
       for (size_t i = 0; i < e->vertices().size(); ++i) {
-        OptimizableGraph::Vertex* v = static_cast<OptimizableGraph::Vertex*>(e->vertex(i));
+        OptimizableGraph::Vertex* v = polymorphic_downcast<OptimizableGraph::Vertex*>(e->vertex(i));
 	if (!v)
 	  continue;
         if (v->fixed())
           fixedVertices.insert(v);
         else { // check for having a prior which is able to fully initialize a vertex
           for (EdgeSet::const_iterator vedgeIt = v->edges().begin(); vedgeIt != v->edges().end(); ++vedgeIt) {
-            OptimizableGraph::Edge* vedge = static_cast<OptimizableGraph::Edge*>(*vedgeIt);
+            OptimizableGraph::Edge* vedge = polymorphic_downcast<OptimizableGraph::Edge*>(*vedgeIt);
             if (vedge->vertices().size() == 1 && vedge->initialEstimatePossible(emptySet, v) > 0.) {
               //cerr << "Initialize with prior for " << v->id() << endl;
               vedge->initialEstimate(emptySet, v);
@@ -589,7 +586,7 @@ namespace g2o{
 
   bool SparseOptimizer::removeVertex(HyperGraph::Vertex* v, bool detach)
   {
-    OptimizableGraph::Vertex* vv = static_cast<OptimizableGraph::Vertex*>(v);
+    OptimizableGraph::Vertex* vv = polymorphic_downcast<OptimizableGraph::Vertex*>(v);
     if (vv->hessianIndex() >= 0) {
       clearIndexMapping();
       _ivMap.clear();

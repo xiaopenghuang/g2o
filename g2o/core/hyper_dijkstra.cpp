@@ -68,8 +68,8 @@ namespace g2o{
 
   void HyperDijkstra::reset()
   {
-    for (HyperGraph::VertexSet::iterator it=_visited.begin(); it!=_visited.end(); it++){
-      AdjacencyMap::iterator at=_adjacencyMap.find(*it);
+    for (auto it : _visited){
+      AdjacencyMap::iterator at=_adjacencyMap.find(it);
       assert(at!=_adjacencyMap.end());
       at->second=AdjacencyMapEntry(at->first,0,0,std::numeric_limits< double >::max());
     }
@@ -88,9 +88,8 @@ namespace g2o{
   {
     reset();
     std::priority_queue< AdjacencyMapEntry > frontier;
-    for (HyperGraph::VertexSet::iterator vit=vset.begin(); vit!=vset.end(); ++vit){
-      HyperGraph::Vertex* v=*vit;
-      assert(v!=0);
+    for (auto v : vset){
+      assert(v!=nullptr);
       AdjacencyMap::iterator it=_adjacencyMap.find(v);
       if (it == _adjacencyMap.end()) {
         cerr << __PRETTY_FUNCTION__ << "Vertex " << v->id() << " is not in the adjacency map" << endl;
